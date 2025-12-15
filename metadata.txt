@@ -1,0 +1,26 @@
+[general]
+name=TetrisGame
+description=Tetris Game for QGIS 3.40+
+version=1.1.0
+qgisMinimumVersion=3.0
+plugin_type=python
+hasProcessingProvider=yes
+about=游戏。联系人：槐中路科科 996517087@qq.com
+# ───────────── 资源链接 ─────────────
+homepage=https://github.com/gaojunke/CoordinateTxtExporter
+repository=https://github.com/gaojunke/CoordinateTxtExporter
+tracker=https://github.com/gaojunke/CoordinateTxtExporter/issues
+# ───────────── 其他属性 ─────────────
+tags=game
+icon=                   ; 若无图标，可留空或删除整行
+hasProcessingProvider=True
+experimental=False
+deprecated=False
+server=False
+plugin_dependencies=
+# ───────────── 更新日志 ─────────────
+changelog=
+1.1.0 – 初始版本
+###############################################################################
+# END OF FILE
+###############################################################################
