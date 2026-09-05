@@ -23,9 +23,9 @@ Download the current plugin ZIP from the QGIS Plugins Repository, then use **Plu
 | P | Pause or resume |
 | R | Restart |
 
-The game window also includes Restart, Pause, GitHub source-code and WeChat public-account buttons.
+The compact two-column window keeps the board on the left. The right column contains the next-piece preview, side-by-side Restart/Pause buttons, attribution, GitHub and WeChat buttons, followed by the unchanged top-five leaderboard.
 
-## Online leaderboard (1.4.1)
+## Online leaderboard (1.4.2)
 
 - Shared worldwide top five: nickname, personal-best score and country.
 - No login or typing: a nickname is generated automatically and retained in the QGIS user's settings. Different installations/settings profiles are different players; this does not identify real people.

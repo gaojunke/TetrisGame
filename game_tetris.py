@@ -1,7 +1,7 @@
 # Always import Qt through QGIS.  In QGIS 4 this resolves to the Qt 6 bindings
 # (and it keeps the plugin independent of a separately installed PyQt package).
 from qgis.PyQt.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl, QTimer
+from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl, QTimer, QPoint
 from qgis.PyQt.QtGui import QPainter, QColor, QFont, QIcon, QDesktopServices
 import os
 import secrets
@@ -54,7 +54,7 @@ class TetrisWindow(QWidget):
     def __init__(self, leaderboard_client=None):
         super().__init__()
         self.setWindowTitle("Tetris")
-        self.setMinimumSize(640, 20 + BOARD_HEIGHT*CELL + 60)
+        self.setMinimumSize(464, 20 + BOARD_HEIGHT*CELL + 60)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setFocus()
@@ -96,7 +96,7 @@ class TetrisWindow(QWidget):
         self.btn_pause.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         # Keep attribution visually quiet so the game controls remain primary.
-        self.credit_label = QLabel("河北地质大学\n高科科\nQQ:996517087")
+        self.credit_label = QLabel("河北地质大学 ★ 高科科\nQQ:996517087")
         self.credit_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.credit_label.setFont(QFont("Microsoft YaHei UI", 9))
         self.credit_label.setStyleSheet("color: #7A8494;")
@@ -132,29 +132,47 @@ class TetrisWindow(QWidget):
         social_layout.addWidget(self.wechat_button)
         social_layout.addStretch()
 
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(8)
+        button_layout.addStretch()
+        for button in (self.btn_restart, self.btn_pause):
+            button.setFixedSize(88, 24)
+            button_layout.addWidget(button)
+        button_layout.addStretch()
+
+        self.preview_area = QWidget()
+        self.preview_area.setFixedSize(120, 120)
+        self.preview_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
         right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.setSpacing(4)
         right_layout.addWidget(self.score_label)
         right_layout.addWidget(self.lines_label)
         right_layout.addWidget(self.level_label)
-        right_layout.addSpacing(10)
         right_layout.addWidget(self.next_title_label)
-        right_layout.addSpacing(150)
-        right_layout.addWidget(self.btn_restart)
-        right_layout.addWidget(self.btn_pause)
-        right_layout.addSpacing(16)
+        right_layout.addWidget(self.preview_area, 0, Qt.AlignmentFlag.AlignHCenter)
+        right_layout.addLayout(button_layout)
         right_layout.addWidget(self.credit_label)
-        right_layout.addSpacing(6)
         right_layout.addLayout(social_layout)
+        self.leaderboard_panel = LeaderboardPanel(self.leaderboard)
+        self.leaderboard_panel.setFixedWidth(200)
+        self.leaderboard_panel.layout().setContentsMargins(0, 8, 0, 0)
+        right_layout.addWidget(self.leaderboard_panel)
         right_layout.addStretch(1)
 
         main_layout = QHBoxLayout()
-        main_layout.addSpacing(BOARD_WIDTH*CELL + 60)  # left space for board
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(24)
+        board_space = QWidget()
+        board_space.setFixedSize(BOARD_WIDTH*CELL, BOARD_HEIGHT*CELL)
+        board_space.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        main_layout.addWidget(board_space, 0, Qt.AlignmentFlag.AlignTop)
         controls = QWidget()
-        controls.setFixedWidth(135)
+        controls.setFixedWidth(200)
         controls.setLayout(right_layout)
         main_layout.addWidget(controls)
-        self.leaderboard_panel = LeaderboardPanel(self.leaderboard)
-        main_layout.addWidget(self.leaderboard_panel)
+        main_layout.addStretch(1)
         self.setLayout(main_layout)
 
         self.start()
@@ -377,14 +395,21 @@ class TetrisWindow(QWidget):
         painter.fillRect(left+1, top+1, CELL-2, CELL-2, color)
 
     def draw_next_piece_preview(self, painter):
-        start_x = 20 + BOARD_WIDTH*CELL + 40
-        start_y = 120
+        origin = self.preview_area.mapTo(self, QPoint(0, 0))
+        left, top = origin.x(), origin.y()
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.fillRect(start_x-10, start_y-10, 120, 120, QColor(230,230,230))
+        painter.fillRect(left, top, 120, 120, QColor(230,230,230))
         painter.setPen(QColor(180,180,180))
-        painter.drawRect(start_x-10, start_y-10, 120, 120)
+        painter.drawRect(left, top, 120, 120)
+
+        min_x = min(px for px, _ in self.next_piece.coords)
+        max_x = max(px for px, _ in self.next_piece.coords)
+        min_y = min(py for _, py in self.next_piece.coords)
+        max_y = max(py for _, py in self.next_piece.coords)
+        start_x = left + (120 - (max_x - min_x + 1) * CELL) // 2
+        start_y = top + (120 - (max_y - min_y + 1) * CELL) // 2
 
         for (px, py) in self.next_piece.coords:
-            x = start_x + (px+1) * CELL
-            y = start_y + (py+1) * CELL
+            x = start_x + (px-min_x) * CELL
+            y = start_y + (py-min_y) * CELL
             painter.fillRect(x+1, y+1, CELL-2, CELL-2, COLORS[self.next_piece.shape])
