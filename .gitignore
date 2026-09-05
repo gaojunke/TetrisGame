@@ -2,3 +2,10 @@ __pycache__/
 *.py[cod]
 *.zip
 .DS_Store
+node_modules/
+.wrangler/
+.test-build/
+.dev.vars*
+.env*
+qgis4-*-preview.png
+bandit-*.json

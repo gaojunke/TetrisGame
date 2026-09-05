@@ -1,4 +1,4 @@
-from qgis.core import QgsProcessingAlgorithm, QgsApplication
+from qgis.core import QgsProcessingAlgorithm, QgsApplication, Qgis
 from .game_tetris import TetrisWindow
 
 class TetrisAlgorithm(QgsProcessingAlgorithm):
@@ -18,6 +18,10 @@ class TetrisAlgorithm(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         pass
+
+    def flags(self):
+        # Qt widgets and the async network client must live on the GUI thread.
+        return super().flags() | Qgis.ProcessingAlgorithmFlag.NoThreading
 
     def createInstance(self):
         return TetrisAlgorithm()

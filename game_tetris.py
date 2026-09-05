@@ -1,15 +1,20 @@
 # Always import Qt through QGIS.  In QGIS 4 this resolves to the Qt 6 bindings
 # (and it keeps the plugin independent of a separately installed PyQt package).
 from qgis.PyQt.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl
+from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl, QTimer
 from qgis.PyQt.QtGui import QPainter, QColor, QFont, QIcon, QDesktopServices
 import os
 import secrets
+import time
+
+from .leaderboard import LeaderboardClient
+from .leaderboard_panel import LeaderboardPanel
 
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 22
 CELL = 20
 REPOSITORY_URL = "https://github.com/gaojunke/TetrisGame"
+WECHAT_URL = "https://mp.weixin.qq.com/s/qdVBmhSAzF2bflZmhZaunw"
 
 SHAPES = {
     'NoShape': [],
@@ -46,10 +51,10 @@ class Piece:
         return rot
 
 class TetrisWindow(QWidget):
-    def __init__(self):
+    def __init__(self, leaderboard_client=None):
         super().__init__()
         self.setWindowTitle("Tetris")
-        self.setMinimumSize(20 + BOARD_WIDTH*CELL + 180, 20 + BOARD_HEIGHT*CELL + 40)
+        self.setMinimumSize(820, 20 + BOARD_HEIGHT*CELL + 60)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setFocus()
@@ -67,6 +72,8 @@ class TetrisWindow(QWidget):
         self.score = 0
         self.lines_cleared = 0
         self.level = 1
+        self.leaderboard = leaderboard_client or LeaderboardClient(self)
+        self._score_recorded = True
 
         # UI elements
         self.score_label = QLabel("Score: 0")
@@ -109,6 +116,22 @@ class TetrisWindow(QWidget):
         )
         self.github_button.clicked.connect(self.open_repository)
 
+        self.wechat_button = QPushButton()
+        self.wechat_button.setToolTip("打开微信公众号文章")
+        self.wechat_button.setAccessibleName("打开微信公众号")
+        self.wechat_button.setIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons", "wechat.svg")))
+        self.wechat_button.setIconSize(QSize(22, 22))
+        self.wechat_button.setFixedSize(34, 30)
+        self.wechat_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.wechat_button.setStyleSheet(self.github_button.styleSheet())
+        self.wechat_button.clicked.connect(self.open_wechat)
+        social_layout = QHBoxLayout()
+        social_layout.setSpacing(8)
+        social_layout.addStretch()
+        social_layout.addWidget(self.github_button)
+        social_layout.addWidget(self.wechat_button)
+        social_layout.addStretch()
+
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.score_label)
         right_layout.addWidget(self.lines_label)
@@ -121,19 +144,29 @@ class TetrisWindow(QWidget):
         right_layout.addSpacing(16)
         right_layout.addWidget(self.credit_label)
         right_layout.addSpacing(6)
-        right_layout.addWidget(self.github_button, 0, Qt.AlignmentFlag.AlignHCenter)
+        right_layout.addLayout(social_layout)
         right_layout.addStretch(1)
 
         main_layout = QHBoxLayout()
         main_layout.addSpacing(BOARD_WIDTH*CELL + 60)  # left space for board
-        main_layout.addLayout(right_layout)
+        controls = QWidget()
+        controls.setFixedWidth(135)
+        controls.setLayout(right_layout)
+        main_layout.addWidget(controls)
+        self.leaderboard_panel = LeaderboardPanel(self.leaderboard)
+        main_layout.addWidget(self.leaderboard_panel)
         self.setLayout(main_layout)
 
         self.start()
+        QTimer.singleShot(0, self.leaderboard.refresh)
 
     # ---- Game control ----
 
     def start(self):
+        self.record_score()
+        self._score_recorded = False
+        self._pieces_played = 0
+        self._started_at = time.monotonic()
         self.clear_board()
         self.score = 0
         self.lines_cleared = 0
@@ -141,6 +174,7 @@ class TetrisWindow(QWidget):
         self.update_labels()
         self.game_over = False
         self.is_paused = False
+        self.btn_pause.setText("Pause")
         self.setWindowTitle("Tetris")
 
         self.next_piece = self.random_piece()
@@ -153,6 +187,22 @@ class TetrisWindow(QWidget):
 
     def open_repository(self):
         QDesktopServices.openUrl(QUrl(REPOSITORY_URL))
+
+    def open_wechat(self):
+        QDesktopServices.openUrl(QUrl(WECHAT_URL))
+
+    def record_score(self):
+        if self._score_recorded:
+            return
+        self._score_recorded = True
+        self.leaderboard.submit(self.score, self.lines_cleared, self._pieces_played,
+                                (time.monotonic() - self._started_at) * 1000)
+
+    def closeEvent(self, event):
+        self.timer.stop()
+        self.record_score()
+        self.leaderboard.close()
+        super().closeEvent(event)
 
     def pause_toggle(self):
         if self.game_over:
@@ -189,6 +239,7 @@ class TetrisWindow(QWidget):
             self.game_over = True
             self.timer.stop()
             self.setWindowTitle("Tetris - Game Over")
+            self.record_score()
             return
 
     # ---- Qt events ----
@@ -253,6 +304,7 @@ class TetrisWindow(QWidget):
         return False
 
     def piece_dropped(self):
+        self._pieces_played += 1
         for (px, py) in self.cur_piece.coords:
             bx = self.cur_x + px
             by = self.cur_y + py

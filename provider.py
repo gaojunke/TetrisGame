@@ -10,6 +10,11 @@ class TetrisProvider(QgsProcessingProvider):
     def hold_window(self, win):
         self._windows.append(win)
 
+    def close_windows(self):
+        for window in self._windows:
+            window.close()
+        self._windows.clear()
+
     def id(self):
         return "tetrisgame"
 

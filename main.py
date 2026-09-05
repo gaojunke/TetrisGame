@@ -10,4 +10,5 @@ class TetrisPlugin:
         QgsApplication.processingRegistry().addProvider(self.provider)
 
     def unload(self):
+        self.provider.close_windows()
         QgsApplication.processingRegistry().removeProvider(self.provider)

@@ -23,7 +23,21 @@ Download the current plugin ZIP from the QGIS Plugins Repository, then use **Plu
 | P | Pause or resume |
 | R | Restart |
 
-The game window also includes Restart, Pause, and GitHub source-code buttons.
+The game window also includes Restart, Pause, GitHub source-code and WeChat public-account buttons.
+
+## Online leaderboard (1.4.0)
+
+- Shared worldwide top five: nickname, personal-best score and country.
+- No login or typing: a nickname is generated automatically and retained in the QGIS user's settings. Different installations/settings profiles are different players; this does not identify real people.
+- Country is estimated by Cloudflare from the connection IP, never selected or submitted by the player. VPNs/proxies affect the estimate. Unknown locations display `Unknown`.
+- Each finished game is submitted once. Restarting or closing also saves a played round; unopened/untouched rounds do not count. The best score per player is retained; ties favor the earlier received best.
+- Requests are asynchronous. Offline play is always possible. Up to 100 recent unsent results are kept for retry while the game window is open (or next time it opens).
+- Disable **Online ranking** to stop future requests and clear the unsent queue. Existing online records are not removed by disabling it.
+- **Privacy** in the game explains the data sharing. See [PRIVACY.md](PRIVACY.md) for the full notice.
+
+The leaderboard is recreational: basic score validation, idempotency and rate limiting reduce accidental duplicates and simple abuse, but an open-source, account-free client cannot provide cheat-proof scores or one-person-one-account enforcement.
+
+The public service is hosted at https://tetrisgame-leaderboard.gaojunke2020.workers.dev. Source and maintenance instructions are in [leaderboard-service](https://github.com/gaojunke/TetrisGame/tree/main/leaderboard-service). The service is not run by QGIS.
 
 ## Compatibility and dependencies
 

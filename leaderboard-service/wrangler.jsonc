@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tetrisgame-leaderboard",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-05",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": false }
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "tetrisgame-leaderboard",
+    "database_id": "c69545b7-340a-4622-9ee2-2a8f331010a7",
+    "migrations_dir": "migrations"
+  }],
+  "ratelimits": [
+    { "name": "READ_LIMITER", "namespace_id": "1400001", "simple": { "limit": 120, "period": 60 } },
+    { "name": "WRITE_LIMITER", "namespace_id": "1400002", "simple": { "limit": 30, "period": 60 } }
+  ]
+}
