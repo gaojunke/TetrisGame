@@ -1,6 +1,6 @@
 # Online leaderboard privacy notice
 
-Version 1.4.0 · 2026-09-05
+Version 1.4.1 · 2026-09-05
 
 Operator: 高科科 (Gao Keke), contact **996517087@qq.com** / QQ 996517087.
 
@@ -12,7 +12,7 @@ After a played round ends, restarts or closes, the plugin submits a random event
 
 Cloudflare processes the connecting IP as part of providing the HTTPS service and estimates its country. The Worker uses trusted country metadata, not a field provided by the plugin. The application database does **not** retain the IP address. IPs are used transiently by Cloudflare's request limiter; invocation logging is disabled, and the Worker logs only a fixed generic failure message. Cloudflare may process network/security metadata under its own [privacy policy](https://www.cloudflare.com/privacypolicy/). Data may be processed outside your country; no specific residency is guaranteed.
 
-Country is an approximate connection location, **not nationality**. VPNs, proxies and mobile networks can affect it. Unrecognized locations are shown as Unknown. A leaderboard entry uses the country when its best result was received, including when an offline result is uploaded later.
+Country is an approximate connection location, **not nationality**. VPNs, proxies and mobile networks can affect it. The panel displays two-letter country codes; unrecognized locations are shown as `—` with an `Unknown` tooltip. A leaderboard entry uses the country when its best result was received, including when an offline result is uploaded later.
 
 ## What is public, and how long it is kept
 
@@ -22,7 +22,7 @@ Online records remain until the operator removes them or the service is retired;
 
 ## Your choices
 
-Disable **Online ranking** in the game to stop future leaderboard requests and discard unsent results. This does not delete scores already received by the server. The game remains playable offline. A previously downloaded leaderboard may remain visible as cached data, with its status shown. Local settings retain your token, nickname and cached top five; up to 100 recent unsent rounds are queued for retry (older unsent rounds are dropped if that limit is exceeded). Removing the local settings loses that anonymous identity, but does not remove online records.
+Right-click **WORLD TOP 5** or the leaderboard and disable **Online ranking** to stop future leaderboard requests and discard unsent results. The same menu includes **Privacy**. This does not delete scores already received by the server. The game remains playable offline. A previously downloaded leaderboard may remain visible as cached data; hover over the title for its status and your full nickname/personal best. Local settings retain your token, nickname and cached top five; up to 100 recent unsent rounds are queued for retry (older unsent rounds are dropped if that limit is exceeded). Removing the local settings loses that anonymous identity, but does not remove online records.
 
 GitHub and WeChat are contacted only when their buttons are clicked. They open in your system browser and follow their own privacy policies. The plugin has no advertising or analytics SDK and sends no crash reports.
 
@@ -30,4 +30,4 @@ GitHub and WeChat are contacted only when their buttons are clicked. They open i
 
 默认开启在线排行，无需登录，昵称自动生成并保存在当前 QGIS 用户配置中。国家由 Cloudflare 根据连接 IP 估算，不代表国籍；代理/VPN 会影响结果。游戏成绩及基础局次统计经 HTTPS 发送给作者的 Cloudflare 服务，数据库不保存原始 IP，也不读取或上传 QGIS 项目和图层。
 
-榜单公开前五名的昵称、最高分和国家。同一配置使用同一昵称，不等同于真人身份认证。每次玩过的对局在结束、重开或关闭时记分；断网最多暂存最近 100 局，重新打开游戏后补传。关闭“Online ranking”可停止后续联网并清除待传成绩；已上传的数据需联系作者删除。点“Privacy”可随时查看说明。
+榜单公开前五名的昵称、最高分和国家。界面仅简写昵称、显示两字母国家代码，悬停可查看完整内容，不改变存储的身份信息。同一配置使用同一昵称，不等同于真人身份认证。每次玩过的对局在结束、重开或关闭时记分；断网最多暂存最近 100 局，重新打开游戏后补传。右键榜单或“WORLD TOP 5”，关闭“Online ranking”可停止后续联网并清除待传成绩；已上传的数据需联系作者删除。同一右键菜单中的“Privacy”可随时查看说明，悬停标题可查看连接状态及自己的完整昵称和最高分。

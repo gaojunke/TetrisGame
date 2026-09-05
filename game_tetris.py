@@ -54,7 +54,7 @@ class TetrisWindow(QWidget):
     def __init__(self, leaderboard_client=None):
         super().__init__()
         self.setWindowTitle("Tetris")
-        self.setMinimumSize(820, 20 + BOARD_HEIGHT*CELL + 60)
+        self.setMinimumSize(640, 20 + BOARD_HEIGHT*CELL + 60)
 
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setFocus()

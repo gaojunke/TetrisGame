@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root))
 from qgis.core import QgsApplication, Qgis
 from qgis.PyQt.QtCore import QSettings, Qt, QPoint
 from qgis.PyQt.QtGui import QFontDatabase, QFont
+from qgis.PyQt.QtWidgets import QFrame, QLabel
 
 QgsApplication.setPrefixPath(os.environ["QGIS_PREFIX_PATH"], True)
 app = QgsApplication([], True)
@@ -43,7 +44,7 @@ if not (project_root / "TetrisGame_updated").is_dir():
 from TetrisGame_updated.leaderboard import LeaderboardClient, PREFIX, valid_player
 from TetrisGame_updated.game_tetris import TetrisWindow, WECHAT_URL, REPOSITORY_URL
 from TetrisGame_updated.alg_tetris import TetrisAlgorithm
-from TetrisGame_updated.leaderboard_panel import country_name
+from TetrisGame_updated.leaderboard_panel import LeaderboardPanel, country_name, short_nickname
 
 
 class PluginTests(unittest.TestCase):
@@ -79,12 +80,41 @@ class PluginTests(unittest.TestCase):
     def test_validation_and_country(self):
         self.assertEqual(country_name("CN"), "China")
         self.assertEqual(country_name("XX"), "Unknown")
+        self.assertEqual(short_nickname("GoldenWhale-1234abcd"), "GoldenWhale·1234")
         self.assertFalse(valid_player({"nickname": "<img src=x>", "country": "CN", "score": 10}))
         self.assertFalse(valid_player({"nickname": "JadeFox-1234abcd", "country": "CN", "score": True}))
         self.client._ranking_ready({"players": []})
         self.assertTrue(self.client.status.startswith("Online"))
         self.client._ranking_ready({"players": [None]})
         self.assertTrue(self.client.status.startswith("Invalid"))
+
+    def test_compact_panel_controls_and_unknown_country(self):
+        panel = LeaderboardPanel(self.client)
+        panel.show()
+        app.processEvents()
+        self.assertEqual(panel.table.item(0, 0).text(), "—")
+        self.assertEqual(panel.table.item(4, 2).text(), "—")
+        self.assertEqual(panel.actions(), [panel.refresh_action, panel.sharing_action,
+                                           panel.privacy_action])
+        self.assertTrue(panel.sharing_action.isChecked())
+        panel.sharing_action.trigger()
+        self.assertFalse(self.client.enabled)
+        panel.sharing_action.trigger()
+        self.assertTrue(self.client.enabled)
+        with patch("TetrisGame_updated.leaderboard_panel.QMessageBox.information") as privacy:
+            panel.privacy_action.trigger()
+            privacy.assert_called_once()
+        self.client.players = [{"nickname": "GoldenWhale-1234abcd", "score": 10000000,
+                                "country": "XX"}]
+        self.client.changed.emit()
+        app.processEvents()
+        self.assertEqual(panel.table.item(0, 1).text(), "10000000")
+        self.assertLessEqual(panel.table.fontMetrics().horizontalAdvance("10000000") + 6,
+                             panel.table.columnWidth(1))
+        self.assertEqual(panel.table.item(0, 2).text(), "—")
+        self.assertEqual(panel.table.item(0, 2).toolTip(), "Unknown")
+        self.assertFalse(qt_errors)
+        panel.close()
 
     def test_gui_and_scoring_hooks(self):
         win = TetrisWindow(leaderboard_client=self.client)
@@ -129,9 +159,27 @@ class PluginTests(unittest.TestCase):
         self.client.status = "UI test fixtures · not live rankings"
         self.client.changed.emit()
         app.processEvents()
-        self.assertEqual(win.leaderboard_panel.table.rowCount(), 5)
+        panel = win.leaderboard_panel
+        self.assertEqual(panel.table.rowCount(), 5)
+        self.assertEqual(panel.table.columnCount(), 3)
+        self.assertEqual(panel.width(), 212)
+        self.assertEqual(panel.table.width(), 200)
+        self.assertLessEqual(win.width(), 650)
+        self.assertFalse(panel.table.horizontalHeader().isVisible())
+        self.assertFalse(panel.table.verticalHeader().isVisible())
+        self.assertEqual(panel.table.frameShape(), QFrame.Shape.NoFrame)
+        self.assertFalse(panel.table.showGrid())
+        self.assertFalse(panel.table.alternatingRowColors())
+        self.assertEqual([label.text() for label in panel.findChildren(QLabel)], ["WORLD TOP 5"])
+        self.assertEqual([panel.table.item(0, col).text() for col in range(3)],
+                         ["GoldenWhale·1234", "15000", "CN"])
+        self.assertEqual(panel.table.item(0, 0).toolTip(), "GoldenWhale-1234abcd")
+        self.assertEqual(panel.table.item(0, 2).toolTip(), "China")
+        self.assertIn("GoldenWhale-1234abcd", panel.heading.toolTip())
+        print("Compact layout:", win.width(), "x", win.height(),
+              "leaderboard values:", panel.table.width(), "px")
         self.assertFalse(qt_errors)
-        output = Path(__file__).resolve().parents[1] / "qgis4-leaderboard-preview.png"
+        output = Path(__file__).resolve().parents[1] / "qgis4-compact-leaderboard-preview.png"
         self.assertTrue(win.grab().save(str(output)))
         win.close()
 
