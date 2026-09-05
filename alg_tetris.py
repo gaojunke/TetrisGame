@@ -9,10 +9,12 @@ class TetrisAlgorithm(QgsProcessingAlgorithm):
         return "Play Tetris Game"
 
     def group(self):
-        return "Tetris Game"
+        # The provider already supplies the "Tetris Game" top-level entry.
+        # An empty group keeps this one-command plugin directly below it.
+        return ""
 
     def groupId(self):
-        return "tetrisgame"
+        return ""
 
     def initAlgorithm(self, config=None):
         pass

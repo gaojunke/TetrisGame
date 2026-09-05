@@ -1,11 +1,15 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-from PyQt5.QtCore import Qt, QBasicTimer
-from PyQt5.QtGui import QPainter, QColor, QFont
+# Always import Qt through QGIS.  In QGIS 4 this resolves to the Qt 6 bindings
+# (and it keeps the plugin independent of a separately installed PyQt package).
+from qgis.PyQt.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
+from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl
+from qgis.PyQt.QtGui import QPainter, QColor, QFont, QIcon, QDesktopServices
+import os
 import random
 
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 22
 CELL = 20
+REPOSITORY_URL = "https://github.com/gaojunke/TetrisGame"
 
 SHAPES = {
     'NoShape': [],
@@ -47,7 +51,7 @@ class TetrisWindow(QWidget):
         self.setWindowTitle("Tetris")
         self.setMinimumSize(20 + BOARD_WIDTH*CELL + 180, 20 + BOARD_HEIGHT*CELL + 40)
 
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setFocus()
 
         self.timer = QBasicTimer()
@@ -69,20 +73,41 @@ class TetrisWindow(QWidget):
         self.lines_label = QLabel("Lines: 0")
         self.level_label = QLabel("Level: 1")
         for lab in (self.score_label, self.lines_label, self.level_label):
-            lab.setFont(QFont("Arial", 10, QFont.Bold))
-            lab.setFocusPolicy(Qt.NoFocus)
+            lab.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+            lab.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.next_title_label = QLabel("Next:")
-        self.next_title_label.setFont(QFont("Arial", 10, QFont.Bold))
-        self.next_title_label.setFocusPolicy(Qt.NoFocus)
+        self.next_title_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        self.next_title_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.btn_restart = QPushButton("Restart")
         self.btn_restart.clicked.connect(self.restart)
-        self.btn_restart.setFocusPolicy(Qt.NoFocus)
+        self.btn_restart.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.btn_pause = QPushButton("Pause")
         self.btn_pause.clicked.connect(self.pause_toggle)
-        self.btn_pause.setFocusPolicy(Qt.NoFocus)
+        self.btn_pause.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        # Keep attribution visually quiet so the game controls remain primary.
+        self.credit_label = QLabel("河北地质大学\n高科科\nQQ:996517087")
+        self.credit_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.credit_label.setFont(QFont("Microsoft YaHei UI", 9))
+        self.credit_label.setStyleSheet("color: #7A8494;")
+        self.credit_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        self.github_button = QPushButton()
+        self.github_button.setToolTip("Open the TetrisGame source code on GitHub")
+        self.github_button.setAccessibleName("Open TetrisGame on GitHub")
+        self.github_button.setIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons", "github-mark.svg")))
+        self.github_button.setIconSize(QSize(20, 20))
+        self.github_button.setFixedSize(34, 30)
+        self.github_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.github_button.setStyleSheet(
+            "QPushButton { border: 1px solid #D0D7DE; border-radius: 5px; background: #FFFFFF; }"
+            "QPushButton:hover { background: #F6F8FA; border-color: #8C959F; }"
+            "QPushButton:pressed { background: #EAEEF2; }"
+        )
+        self.github_button.clicked.connect(self.open_repository)
 
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.score_label)
@@ -93,6 +118,10 @@ class TetrisWindow(QWidget):
         right_layout.addSpacing(150)
         right_layout.addWidget(self.btn_restart)
         right_layout.addWidget(self.btn_pause)
+        right_layout.addSpacing(16)
+        right_layout.addWidget(self.credit_label)
+        right_layout.addSpacing(6)
+        right_layout.addWidget(self.github_button, 0, Qt.AlignmentFlag.AlignHCenter)
         right_layout.addStretch(1)
 
         main_layout = QHBoxLayout()
@@ -121,6 +150,9 @@ class TetrisWindow(QWidget):
     def restart(self):
         self.start()
         self.setFocus()
+
+    def open_repository(self):
+        QDesktopServices.openUrl(QUrl(REPOSITORY_URL))
 
     def pause_toggle(self):
         if self.game_over:
@@ -175,24 +207,24 @@ class TetrisWindow(QWidget):
             return
 
         key = event.key()
-        if key == Qt.Key_P:
+        if key == Qt.Key.Key_P:
             self.pause_toggle()
             return
 
         if self.is_paused:
             return
 
-        if key == Qt.Key_Left:
+        if key == Qt.Key.Key_Left:
             self.try_move(self.cur_piece, self.cur_x - 1, self.cur_y)
-        elif key == Qt.Key_Right:
+        elif key == Qt.Key.Key_Right:
             self.try_move(self.cur_piece, self.cur_x + 1, self.cur_y)
-        elif key == Qt.Key_Down:
+        elif key == Qt.Key.Key_Down:
             self.try_move(self.cur_piece, self.cur_x, self.cur_y + 1)
-        elif key == Qt.Key_Up:
+        elif key == Qt.Key.Key_Up:
             self.try_move(self.cur_piece.rotated(), self.cur_x, self.cur_y)
-        elif key == Qt.Key_Space:
+        elif key == Qt.Key.Key_Space:
             self.drop_down()
-        elif key == Qt.Key_R:
+        elif key == Qt.Key.Key_R:
             self.restart()
 
         self.update()
@@ -295,7 +327,7 @@ class TetrisWindow(QWidget):
     def draw_next_piece_preview(self, painter):
         start_x = 20 + BOARD_WIDTH*CELL + 40
         start_y = 120
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.fillRect(start_x-10, start_y-10, 120, 120, QColor(230,230,230))
         painter.setPen(QColor(180,180,180))
         painter.drawRect(start_x-10, start_y-10, 120, 120)
