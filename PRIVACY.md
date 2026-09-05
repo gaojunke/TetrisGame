@@ -1,6 +1,6 @@
 # Online leaderboard privacy notice
 
-Version 1.4.1 · 2026-09-05
+Version 1.3.2 · 2026-09-05
 
 Operator: 高科科 (Gao Keke), contact **996517087@qq.com** / QQ 996517087.
 
