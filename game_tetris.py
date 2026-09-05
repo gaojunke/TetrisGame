@@ -4,7 +4,7 @@ from qgis.PyQt.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QHBox
 from qgis.PyQt.QtCore import Qt, QBasicTimer, QSize, QUrl
 from qgis.PyQt.QtGui import QPainter, QColor, QFont, QIcon, QDesktopServices
 import os
-import random
+import secrets
 
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 22
@@ -176,7 +176,7 @@ class TetrisWindow(QWidget):
         self.board = [['NoShape'] * BOARD_WIDTH for _ in range(BOARD_HEIGHT)]
 
     def random_piece(self):
-        shape = random.choice(list(SHAPES.keys())[1:])
+        shape = secrets.choice(list(SHAPES.keys())[1:])
         return Piece(shape)
 
     def new_piece(self):
